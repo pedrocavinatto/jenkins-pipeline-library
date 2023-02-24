@@ -80,7 +80,7 @@ void call(){
             stage('Deploy project with Helm') {
                 git url: repo, branch: branch
                 container(name: 'helm', shell: '/bin/ash') {
-                    sh "helm upgrade --install ${tenantID} ./${chartFolder} --set image.tag=${tagVersion}"
+                    sh "helm upgrade --install ${tenantID} ./${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
                 }
             }
         }
