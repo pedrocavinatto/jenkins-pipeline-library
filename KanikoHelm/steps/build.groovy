@@ -5,6 +5,8 @@ void call(){
 
     // Git stuff
     def repo = config.git_repo
+    def additionalRepo = config.git_additional_repo
+    def additionalBranch = config.git_additional_branch
     def branch = config.git_branch
     def chartFolder = config.chartFolder
 
@@ -50,6 +52,9 @@ void call(){
         node(labelKaniko) {
             stage('Build Kaniko') {
                 git url: repo, branch: branch
+                if (additionalRepo != null && additionalBranch != null) {
+                    git url: additionalRepo, branch: additionalBranch
+                }
                 container(name: 'kaniko', shell: '/busybox/sh') {
                     sh """#!/busybox/sh
                     /kaniko/executor -f Dockerfile -c `pwd` --destination=${dockerHubUser}/${tenantID}:${tagVersion}
@@ -79,6 +84,9 @@ void call(){
         node(labelHelm) {
             stage('Deploy project with Helm') {
                 git url: repo, branch: branch
+                if (additionalRepo != null && additionalBranch != null) {
+                    git url: additionalRepo, branch: additionalBranch
+                }
                 container(name: 'helm', shell: '/bin/ash') {
                     sh "helm upgrade --install ${tenantID} ./${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
                 }
