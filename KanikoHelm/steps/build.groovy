@@ -10,7 +10,7 @@ void call(){
     def repoFolder = repo.substring(repo.lastIndexOf('/') + 1, repo.lastIndexOf('.'))
     def additionalRepoFolder = ""
     if (additionalRepo != null) {
-        additionalRepoFolder = additionalRepo.substring(repo.lastIndexOf('/') + 1, repo.lastIndexOf('.'))
+        additionalRepoFolder = additionalRepo.substring(additionalRepo.lastIndexOf('/') + 1, additionalRepo.lastIndexOf('.'))
     }
 
     // Docker Hub stuff
