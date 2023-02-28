@@ -62,7 +62,7 @@ void call(){
                 }
                 container(name: 'kaniko', shell: '/busybox/sh') {
                     sh """#!/busybox/sh
-                    /kaniko/executor -f ${repoFolder}/Dockerfile -c `pwd` --destination=${dockerHubUser}/${tenantID}:${tagVersion}
+                    /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${dockerHubUser}/${tenantID}:${tagVersion}
                     """
                 }
             }
