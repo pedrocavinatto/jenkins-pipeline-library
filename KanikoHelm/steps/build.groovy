@@ -5,12 +5,13 @@ void call(){
 
     // Git stuff
     def repo = config.git_repo
-    def branch = config.git_branch
     def chartFolder = config.chartFolder
     def additionalRepo = config.git_additional_repo
-    def additionalBranch = config.git_additional_branch
-    def gitName = config.git_name
-    def gitEmail = config.git_email
+    def repoFolder = repo.substring(repo.lastIndexOf('/') + 1, repo.lastIndexOf('.'))
+    def additionalRepoFolder = ""
+    if (additionalRepo != null) {
+        additionalRepoFolder = additionalRepo.substring(repo.lastIndexOf('/') + 1, repo.lastIndexOf('.'))
+    }
 
     // Docker Hub stuff
     def dockerHubUser = config.dockerHubUser
@@ -53,18 +54,15 @@ void call(){
         {
         node(labelKaniko) {
             stage('Build Kaniko') {
-                git url: repo, branch: branch
-                if (additionalRepo != null && additionalBranch != null && gitName != null && gitEmail != null) {
-                    sh """git checkout -b ${labelKaniko}"""
-                    sh """git config --global user.email ${gitEmail} """
-                    sh """git config --global user.name ${gitName} """
-                    sh """git remote add additional-project ${additionalRepo}"""
-                    sh """git fetch additional-project --tags"""
-                    sh """git merge --allow-unrelated-histories additional-project/${additionalBranch}"""
+                sh "git clone ${repo}"
+                if (additionalRepo != null) {
+                    sh "git clone ${additionalRepo}"
+                    sh "cp -r ${additionalRepoFolder}/* ${repoFolder}"
+                    sh "ls -la ${repoFolder}"
                 }
                 container(name: 'kaniko', shell: '/busybox/sh') {
                     sh """#!/busybox/sh
-                    /kaniko/executor -f Dockerfile -c `pwd` --destination=${dockerHubUser}/${tenantID}:${tagVersion}
+                    /kaniko/executor -f ${repoFolder}/Dockerfile -c `pwd` --destination=${dockerHubUser}/${tenantID}:${tagVersion}
                     """
                 }
             }
@@ -90,17 +88,14 @@ void call(){
         {
         node(labelHelm) {
             stage('Deploy project with Helm') {
-                git url: repo, branch: branch
-                if (additionalRepo != null && additionalBranch != null && gitName != null && gitEmail != null) {
-                    sh """git checkout -b ${labelKaniko}"""
-                    sh """git config --global user.email ${gitEmail} """
-                    sh """git config --global user.name ${gitName} """
-                    sh """git remote add additional-project ${additionalRepo}"""
-                    sh """git fetch additional-project --tags"""
-                    sh """git merge --allow-unrelated-histories additional-project/${additionalBranch}"""
+                sh "git clone ${repo}"
+                if (additionalRepo != null) {
+                    sh "git clone ${additionalRepo}"
+                    sh "cp -r ${additionalRepoFolder}/* ${repoFolder}"
+                    sh "ls -la ${repoFolder}"
                 }
                 container(name: 'helm', shell: '/bin/ash') {
-                    sh "helm upgrade --install ${tenantID} ./${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
+                    sh "helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
                 }
             }
         }
