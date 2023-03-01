@@ -61,9 +61,11 @@ void call(){
                     sh "ls -la ${repoFolder}"
                 }
                 container(name: 'kaniko', shell: '/busybox/sh') {
-                    sh """#!/busybox/sh
-                    /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${dockerHubUser}/${tenantID}:${tagVersion}
-                    """
+                    withEnv(['PATH+EXTRA=/busybox']) {
+                      sh """#!/busybox/sh
+                      /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${dockerHubUser}/${tenantID}:${tagVersion}
+                      """
+                    }
                 }
             }
         }
