@@ -22,6 +22,7 @@ void call(){
     def jenkinsServiceAccount = config.jenkinsServiceAccount
     def dockerHubCredentialsSecret = config.dockerHubCredentialsSecret
     def secretKey = config.secretKey
+    def hostDNS = config.hostDNS
     
     podTemplate(name: 'kaniko', label: labelKaniko, serviceAccount: jenkinsServiceAccount, yaml: """
     kind: Pod
@@ -97,7 +98,11 @@ void call(){
                     sh "ls -la ${repoFolder}"
                 }
                 container(name: 'helm', shell: '/bin/ash') {
-                    sh "helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
+                    helmCommand = "helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
+                    if (hostDNS != null) {
+                        helmCommand += " --set ingress.host=${tenantID}.${hostDNS}"
+                    }
+                    sh helmCommand
                 }
             }
         }
