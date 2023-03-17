@@ -28,6 +28,7 @@ void call(){
     String success_status = "success"
     String failed_status = "failed"
 
+    Boolean wasBuildSuccessful = false
     try {
         podTemplate(name: 'kaniko', label: labelKaniko, serviceAccount: jenkinsServiceAccount, yaml: """
         kind: Pod
@@ -77,11 +78,15 @@ void call(){
             }
         }
         sendLogs(success_status, "Build Project", null)
+        wasBuildSuccessful = true
     } catch (Exception e) {
         sendLogs(failed_status, "Build Project", e.toString())
     }
     
     try {
+        if (!wasBuildSuccessful) {
+            throw new Exception("Build failed, skipping deploy")
+        }
         podTemplate(name: 'helm', label: labelHelm, serviceAccount: jenkinsServiceAccount, yaml: """
         kind: Pod
         metadata:
