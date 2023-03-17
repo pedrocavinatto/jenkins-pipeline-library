@@ -23,34 +23,10 @@ void call(){
     def dockerHubCredentialsSecret = config.dockerHubCredentialsSecret
     def secretKey = config.secretKey
     def hostDNS = config.hostDNS
-    
-    //Logging stuff
+
     //defining the default values for the log status
     String success_status = "success"
     String failed_status = "failed"
-
-    def getJobUrl() {
-        String build_url = "${BUILD_URL}"
-        return build_url.substring(0, build_url.length() - ("${BUILD_NUMBER}".toString() + "/").length())
-    }
-
-    //sending request for logging purposes
-    def sendLogs(String status, String step, String error) {
-        def log = new LogStatus(
-            job_url: getJobUrl(),
-            status: status,
-            step: step,
-            tenant_id: "${tenantID}",
-            build_number: Integer.parseInt("${BUILD_NUMBER}"),
-            build_url: "${BUILD_URL}",
-            error: error
-        )
-        
-        def json = new groovy.json.JsonBuilder( log ).toPrettyString()
-        
-        echo json
-        //curl
-    }
 
     try {
         podTemplate(name: 'kaniko', label: labelKaniko, serviceAccount: jenkinsServiceAccount, yaml: """
@@ -147,6 +123,7 @@ void call(){
     }
 }
 
+//Logging stuff
 //Class that will be used as JSON skeleton
 class LogStatus {
     String job_url
@@ -156,4 +133,27 @@ class LogStatus {
     String tenant_id
     Integer build_number
     String error
+}
+
+def getJobUrl() {
+    String build_url = "${BUILD_URL}"
+    return build_url.substring(0, build_url.length() - ("${BUILD_NUMBER}".toString() + "/").length())
+}
+
+//sending request for logging purposes
+def sendLogs(String status, String step, String error) {
+    def log = new LogStatus(
+        job_url: getJobUrl(),
+        status: status,
+        step: step,
+        tenant_id: "${config.tenantID}",
+        build_number: Integer.parseInt("${BUILD_NUMBER}"),
+        build_url: "${BUILD_URL}",
+        error: error
+    )
+    
+    def json = new groovy.json.JsonBuilder( log ).toPrettyString()
+    
+    echo json
+    //curl
 }
