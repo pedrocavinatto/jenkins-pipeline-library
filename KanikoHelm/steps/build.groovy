@@ -25,17 +25,6 @@ void call(){
     def hostDNS = config.hostDNS
     
     //Logging stuff
-    //Class that will be used as JSON skeleton
-    class LogStatus {
-        String job_url
-        String build_url
-        String status
-        String step
-        String tenant_id
-        Integer build_number
-        String error
-    }
-
     //defining the default values for the log status
     String success_status = "success"
     String failed_status = "failed"
@@ -156,4 +145,15 @@ void call(){
     } catch (Exception e) {
         sendLogs(failed_status, "Deploy Project", e.toString())
     }
+}
+
+//Class that will be used as JSON skeleton
+class LogStatus {
+    String job_url
+    String build_url
+    String status
+    String step
+    String tenant_id
+    Integer build_number
+    String error
 }
