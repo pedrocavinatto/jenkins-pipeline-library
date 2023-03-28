@@ -12,6 +12,10 @@ void call(){
     if (additionalRepo != null) {
         additionalRepoFolder = additionalRepo.substring(additionalRepo.lastIndexOf('/') + 1, additionalRepo.lastIndexOf('.'))
     }
+    def solutionName = config.solutionName
+    if (solutionName == null) {
+        solutionName = "web" //Default value
+    }
 
     // Docker Hub stuff
     def dockerHubUser = config.dockerHubUser
@@ -113,7 +117,11 @@ void call(){
                         sh "ls -la ${repoFolder}"
                     }
                     container(name: 'helm', shell: '/bin/ash') {
-                        helmCommand = "helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} --set image.tag=${tagVersion} --set image.repository=${dockerHubUser}/${tenantID}"
+                        helmCommand = """helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} 
+                        --set image.tag=${tagVersion} 
+                        --set image.repository=${dockerHubUser}/${tenantID} 
+                        --set solutionName=${solutionName}.dll
+                        --set ingress.enabled=true"""
                         if (hostDNS != null) {
                             helmCommand += " --set ingress.host=${tenantID}.${hostDNS}"
                         }
