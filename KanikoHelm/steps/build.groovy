@@ -120,7 +120,7 @@ void call(){
                         helmCommand = """helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} \
                         --set image.tag=${tagVersion} \
                         --set image.repository=${dockerHubUser}/${tenantID} \
-                        --set solutionName="${solutionName}.dll" \
+                        --set solutionName="${solutionName}" \
                         --set ingress.enabled=true"""
                         if (hostDNS != null) {
                             helmCommand += " --set ingress.host=${tenantID}.${hostDNS}"
