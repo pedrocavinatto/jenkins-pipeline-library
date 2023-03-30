@@ -17,14 +17,14 @@ void call(){
         solutionName = "web" //Default value
     }
 
-    // Docker Hub stuff
-    def dockerHubUser = config.dockerHubUser
+    // Registry stuff
+    def registryString = config.registryString
     def tenantID = config.tenantID
     def tagVersion = config.tagVersion //Could be changed to use the build number
 
     // Kubernetes stuff
     def jenkinsServiceAccount = config.jenkinsServiceAccount
-    def dockerHubCredentialsSecret = config.dockerHubCredentialsSecret
+    def registryCredentialsSecret = config.registryCredentialsSecret
     def secretKey = config.secretKey
     def hostDNS = config.hostDNS
 
@@ -47,14 +47,14 @@ void call(){
             - /busybox/cat
             tty: true
             volumeMounts:
-              - name: ${dockerHubCredentialsSecret}
+              - name: ${registryCredentialsSecret}
                 mountPath: /kaniko/.docker
           volumes:
-          - name: ${dockerHubCredentialsSecret}
+          - name: ${registryCredentialsSecret}
             projected:
               sources:
               - secret:
-                  name: ${dockerHubCredentialsSecret}
+                  name: ${registryCredentialsSecret}
                   items:
                     - key: ${secretKey}
                       path: ${secretKey}
@@ -74,7 +74,7 @@ void call(){
                     container(name: 'kaniko', shell: '/busybox/sh') {
                         withEnv(['PATH+EXTRA=/busybox']) {
                           sh """#!/busybox/sh
-                          /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${dockerHubUser}/${tenantID}:${tagVersion}
+                          /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${registryString}/${tenantID}:${tagVersion}
                           """
                         }
                     }
@@ -119,7 +119,7 @@ void call(){
                     container(name: 'helm', shell: '/bin/ash') {
                         helmCommand = """helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} \
                         --set image.tag=${tagVersion} \
-                        --set image.repository=${dockerHubUser}/${tenantID} \
+                        --set image.repository=${registryString}/${tenantID} \
                         --set solutionName="${solutionName}" \
                         --set ingress.enabled=true"""
                         if (hostDNS != null) {
