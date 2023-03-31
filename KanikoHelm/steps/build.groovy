@@ -33,6 +33,9 @@ void call(){
         tlsEnabled = false //Default value
     }
 
+    //Logging parameter
+    def loggingEndpoint = config.loggingEndpoint
+
     //defining the default values for the log status
     String success_status = "success"
     String failed_status = "failed"
@@ -86,10 +89,10 @@ void call(){
                 }
             }
         }
-        sendLogs(success_status, "Build Project", null)
+        sendLogs(success_status, "Build Project", null, loggingEndpoint)
         wasBuildSuccessful = true
     } catch (Exception e) {
-        sendLogs(failed_status, "Build Project", e.toString())
+        sendLogs(failed_status, "Build Project", e.toString(), loggingEndpoint)
     }
     
     try {
@@ -141,9 +144,9 @@ void call(){
                 }
             }
         }
-        sendLogs(success_status, "Deploy Project", null)
+        sendLogs(success_status, "Deploy Project", null, loggingEndpoint)
     } catch (Exception e) {
-        sendLogs(failed_status, "Deploy Project", e.toString())
+        sendLogs(failed_status, "Deploy Project", e.toString(), loggingEndpoint)
     }
 }
 
@@ -165,7 +168,7 @@ def getJobUrl() {
 }
 
 //sending request for logging purposes
-def sendLogs(String status, String step, String error) {
+def sendLogs(String status, String step, String error, String loggingEndpoint) {
     def log = new LogStatus(
         job_url: getJobUrl(),
         status: status,
@@ -179,5 +182,14 @@ def sendLogs(String status, String step, String error) {
     def json = new groovy.json.JsonBuilder( log ).toPrettyString()
     
     echo json
-    //curl
+    
+    if (loggingEndpoint != null && loggingEndpoint.trim() != "") {
+        String sendLogReq = """curl --request POST \
+        --url ${loggingEndpoint} \
+        --header 'Accept: application/json' \
+        --header 'Content-Type: application/json' \
+        --data '${json}'"""
+        
+        sh sendLogReq
+    }
 }
