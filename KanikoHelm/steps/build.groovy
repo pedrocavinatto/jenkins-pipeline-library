@@ -27,6 +27,11 @@ void call(){
     def registryCredentialsSecret = config.registryCredentialsSecret
     def secretKey = config.secretKey
     def hostDNS = config.hostDNS
+    def clusterIssuer = config.clusterIssuer
+    def tlsEnabled = config.tlsEnabled
+    if (tlsEnabled == null) {
+        tlsEnabled = false //Default value
+    }
 
     //defining the default values for the log status
     String success_status = "success"
@@ -124,6 +129,12 @@ void call(){
                         --set ingress.enabled=true"""
                         if (hostDNS != null) {
                             helmCommand += " --set ingress.host=${tenantID}.${hostDNS}"
+                        }
+                        if (hostDNS != null && config.tlsEnabled) {
+                            helmCommand += " --set ingress.tls.enabled=true --set ingress.tls.secretName=${tenantID}-cert --set ingress.tls.hosts[0]=${tenantID}.${hostDNS}"
+                        }
+                        if (clusterIssuer != null) {
+                            helmCommand += " --set ingress.clusterIssuer=${clusterIssuer}"
                         }
                         sh helmCommand
                     }
