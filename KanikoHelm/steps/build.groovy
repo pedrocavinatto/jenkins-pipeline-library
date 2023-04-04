@@ -185,7 +185,7 @@ def sendLogs(String status, String step, String error, String loggingEndpoint) {
     
     if (loggingEndpoint != null && loggingEndpoint.trim() != "") {
         String sendLogReq = """curl --request POST \
-        --url ${loggingEndpoint} \
+        --url '${loggingEndpoint}' \
         --header 'Accept: application/json' \
         --header 'Content-Type: application/json' \
         --data '${json}'"""
