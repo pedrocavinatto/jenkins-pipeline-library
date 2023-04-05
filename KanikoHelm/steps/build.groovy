@@ -44,26 +44,26 @@ void call(){
     podTemplate(name: 'kaniko', label: labelKaniko, serviceAccount: jenkinsServiceAccount, yaml: """
     kind: Pod
     metadata:
-        name: kaniko
+      name: kaniko
     spec:
-        containers:
-        - name: kaniko
+      containers:
+      - name: kaniko
         image: gcr.io/kaniko-project/executor:debug
         imagePullPolicy: Always
         command:
         - /busybox/cat
         tty: true
         volumeMounts:
-            - name: ${registryCredentialsSecret}
+          - name: ${registryCredentialsSecret}
             mountPath: /kaniko/.docker
         volumes:
         - name: ${registryCredentialsSecret}
-        projected:
+          projected:
             sources:
             - secret:
                 name: ${registryCredentialsSecret}
                 items:
-                - key: ${secretKey}
+                  - key: ${secretKey}
                     path: ${secretKey}
     """
         ) 
@@ -97,10 +97,10 @@ void call(){
     podTemplate(name: 'helm', label: labelHelm, serviceAccount: jenkinsServiceAccount, yaml: """
     kind: Pod
     metadata:
-        name: helm
+      name: helm
     spec:
-        containers:
-        - name: helm
+      containers:
+      - name: helm
         image: alpine/helm
         imagePullPolicy: Always
         command:
