@@ -192,6 +192,6 @@ def sendLogs(String status, String step, String error, String loggingEndpoint) {
         --header 'Content-Type: application/json' \
         --data '${json}'"""
         
-        sh sendLogReq
+        //sh sendLogReq
     }
 }
