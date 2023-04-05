@@ -56,15 +56,15 @@ void call(){
         volumeMounts:
           - name: ${registryCredentialsSecret}
             mountPath: /kaniko/.docker
-        volumes:
-        - name: ${registryCredentialsSecret}
-          projected:
-            sources:
-            - secret:
-                name: ${registryCredentialsSecret}
-                items:
-                  - key: ${secretKey}
-                    path: ${secretKey}
+      volumes:
+      - name: ${registryCredentialsSecret}
+        projected:
+          sources:
+          - secret:
+              name: ${registryCredentialsSecret}
+              items:
+                - key: ${secretKey}
+                  path: ${secretKey}
     """
         ) 
     
