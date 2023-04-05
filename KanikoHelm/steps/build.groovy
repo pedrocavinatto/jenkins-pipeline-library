@@ -41,38 +41,37 @@ void call(){
     String failed_status = "failed"
 
     Boolean wasBuildSuccessful = false
-    try {
-        podTemplate(name: 'kaniko', label: labelKaniko, serviceAccount: jenkinsServiceAccount, yaml: """
-        kind: Pod
-        metadata:
-          name: kaniko
-        spec:
-          containers:
-          - name: kaniko
-            image: gcr.io/kaniko-project/executor:debug
-            imagePullPolicy: Always
-            command:
-            - /busybox/cat
-            tty: true
-            volumeMounts:
-              - name: ${registryCredentialsSecret}
-                mountPath: /kaniko/.docker
-          volumes:
-          - name: ${registryCredentialsSecret}
-            projected:
-              sources:
-              - secret:
-                  name: ${registryCredentialsSecret}
-                  items:
-                    - key: ${secretKey}
-                      path: ${secretKey}
-        """
-            ) 
-        
-        
-            {
-            node(labelKaniko) {
-                stage('Build Kaniko') {
+    podTemplate(name: 'kaniko', label: labelKaniko, serviceAccount: jenkinsServiceAccount, yaml: """
+    kind: Pod
+    metadata:
+        name: kaniko
+    spec:
+        containers:
+        - name: kaniko
+        image: gcr.io/kaniko-project/executor:debug
+        imagePullPolicy: Always
+        command:
+        - /busybox/cat
+        tty: true
+        volumeMounts:
+            - name: ${registryCredentialsSecret}
+            mountPath: /kaniko/.docker
+        volumes:
+        - name: ${registryCredentialsSecret}
+        projected:
+            sources:
+            - secret:
+                name: ${registryCredentialsSecret}
+                items:
+                - key: ${secretKey}
+                    path: ${secretKey}
+    """
+        ) 
+    
+        {
+        node(labelKaniko) {
+            stage('Build Kaniko') {
+                try {
                     sh "git clone ${repo}"
                     if (additionalRepo != null) {
                         sh "git clone ${additionalRepo}"
@@ -81,43 +80,43 @@ void call(){
                     }
                     container(name: 'kaniko', shell: '/busybox/sh') {
                         withEnv(['PATH+EXTRA=/busybox']) {
-                          sh """#!/busybox/sh
-                          /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${registryString}/${tenantID}:${tagVersion}
-                          """
+                        sh """#!/busybox/sh
+                        /kaniko/executor -f ${repoFolder}/Dockerfile -c ${repoFolder} --destination=${registryString}/${tenantID}:${tagVersion}
+                        """
                         }
                     }
+                    sendLogs(success_status, "Build Project", null, loggingEndpoint)
+                    wasBuildSuccessful = true
+                } catch (Exception e) {
+                    sendLogs(failed_status, "Build Project", e.toString(), loggingEndpoint)
                 }
             }
         }
-        sendLogs(success_status, "Build Project", null, loggingEndpoint)
-        wasBuildSuccessful = true
-    } catch (Exception e) {
-        sendLogs(failed_status, "Build Project", e.toString(), loggingEndpoint)
     }
     
-    try {
-        if (!wasBuildSuccessful) {
-            throw new Exception("Build failed, skipping deploy")
-        }
-        podTemplate(name: 'helm', label: labelHelm, serviceAccount: jenkinsServiceAccount, yaml: """
-        kind: Pod
-        metadata:
-          name: helm
-        spec:
-          containers:
-          - name: helm
-            image: alpine/helm
-            imagePullPolicy: Always
-            command:
-            - cat
-            tty: true
-        """
-            ) 
-        
-        
-            {
-            node(labelHelm) {
-                stage('Deploy project with Helm') {
+    podTemplate(name: 'helm', label: labelHelm, serviceAccount: jenkinsServiceAccount, yaml: """
+    kind: Pod
+    metadata:
+        name: helm
+    spec:
+        containers:
+        - name: helm
+        image: alpine/helm
+        imagePullPolicy: Always
+        command:
+        - cat
+        tty: true
+    """
+        ) 
+    
+        {
+        node(labelHelm) {
+            stage('Deploy project with Helm') {
+                try {
+                    if (!wasBuildSuccessful) {
+                        throw new Exception("Build failed, skipping deploy")
+                    }
+
                     sh "git clone ${repo}"
                     if (additionalRepo != null) {
                         sh "git clone ${additionalRepo}"
@@ -125,7 +124,7 @@ void call(){
                         sh "ls -la ${repoFolder}"
                     }
                     container(name: 'helm', shell: '/bin/ash') {
-                        helmCommand = """helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} \
+                        helmCommand = """helm upgrade --install --dry-run ${tenantID} ./${repoFolder}/${chartFolder} \
                         --set image.tag=${tagVersion} \
                         --set image.repository=${registryString}/${tenantID} \
                         --set solutionName="${solutionName}" \
@@ -141,12 +140,12 @@ void call(){
                         }
                         sh helmCommand
                     }
+                    sendLogs(success_status, "Deploy Project", null, loggingEndpoint)
+                } catch (Exception e) {
+                    sendLogs(failed_status, "Deploy Project", e.toString(), loggingEndpoint)
                 }
             }
         }
-        sendLogs(success_status, "Deploy Project", null, loggingEndpoint)
-    } catch (Exception e) {
-        sendLogs(failed_status, "Deploy Project", e.toString(), loggingEndpoint)
     }
 }
 
@@ -192,6 +191,6 @@ def sendLogs(String status, String step, String error, String loggingEndpoint) {
         --header 'Content-Type: application/json' \
         --data '${json}'"""
         
-        //sh sendLogReq
+        sh sendLogReq
     }
 }
