@@ -124,7 +124,7 @@ void call(){
                         sh "ls -la ${repoFolder}"
                     }
                     container(name: 'helm', shell: '/bin/ash') {
-                        helmCommand = """helm upgrade --install --dry-run ${tenantID} ./${repoFolder}/${chartFolder} \
+                        helmCommand = """helm upgrade --install ${tenantID} ./${repoFolder}/${chartFolder} \
                         --set image.tag=${tagVersion} \
                         --set image.repository=${registryString}/${tenantID} \
                         --set solutionName="${solutionName}" \
